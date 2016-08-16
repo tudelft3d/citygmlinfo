@@ -156,6 +156,14 @@ void report_building(pugi::xml_document& doc) {
   }
   std::cout << "# of Building splitted into Part: " << counter << std::endl;
 
+  s = "//" + localise("Building") + "//" + localise("Solid");
+  tmp = doc.select_nodes(s.c_str());
+  if (tmp.size() == 0)
+    std::cout << "Buildings stored with MS" << std::endl;
+  else
+    std::cout << "Buildings stored with <gml:Solid>" << std::endl;
+
+
 }
 
 
