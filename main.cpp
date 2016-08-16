@@ -101,74 +101,96 @@ void report_primitives(pugi::xml_document& doc) {
   std::cout << "+++++++++++++++++++ PRIMITIVES +++++++++++++++++++" << std::endl;
   
   std::string s = "//" + localise("Solid");
-  pugi::xpath_node_set tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of <gml:Solid>: " << tmp.size() << std::endl;
+  std::cout << std::setw(35) << std::left  << "<gml:Solid>";
+  std::cout << std::setw(15) << std::right << doc.select_nodes(s.c_str()).size() << std::endl;
 
   s = "//" + localise("MultiSolid");
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of <gml:MultiSolid>: " << tmp.size() << std::endl;
-
-  s = "//" + localise("MultiSurface");
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of <gml:MultiSurface>: " << tmp.size() << std::endl;
-
-  s = "//" + localise("CompositeSurface");
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of <gml:CompositeSurface>: " << tmp.size() << std::endl;
+  std::cout << std::setw(35) << std::left  << "<gml:MultiSolid>";
+  std::cout << std::setw(15) << std::right << doc.select_nodes(s.c_str()).size() << std::endl;
 
   s = "//" + localise("CompositeSolid");
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of <gml:CompositeSolid>: " << tmp.size() << std::endl;
+  std::cout << std::setw(35) << std::left  << "<gml:CompositeSolid>";
+  std::cout << std::setw(15) << std::right << doc.select_nodes(s.c_str()).size() << std::endl;
+  
+  s = "//" + localise("MultiSurface");
+  std::cout << std::setw(35) << std::left  << "<gml:MultiSurface>";
+  std::cout << std::setw(15) << std::right << doc.select_nodes(s.c_str()).size() << std::endl;
+  
+  s = "//" + localise("CompositeSurface");
+  std::cout << std::setw(35) << std::left  << "<gml:CompositeSurface>";
+  std::cout << std::setw(15) << std::right << doc.select_nodes(s.c_str()).size() << std::endl;
+
+  std::cout << std::endl;
 }
+
 
 void report_building(pugi::xml_document& doc) {
   std::cout << "+++++++++++++++++++ BUILDINGS +++++++++++++++++++" << std::endl;
-  
-  std::string s = "//" + localise("Building");
-  pugi::xpath_node_set tmp = doc.select_nodes(s.c_str());
-  int nobuildings = tmp.size();
-  std::cout << "# of Building: " << nobuildings << std::endl;
-
+  std::string s;
+  s = "//" + localise("Building");
+  std::cout << std::setw(35) << std::left  << "<Building>";
+  int nobuildings = doc.select_nodes(s.c_str()).size();
+  std::cout << std::setw(15) << std::right << nobuildings << std::endl;
   s = "//" + localise("Building") + "[@" + localise("id") + "]";
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of Building with 'gml:id': " << tmp.size() << std::endl;
+  if (doc.select_nodes(s.c_str()).size() == nobuildings)
+    std::cout << "(all of them have gml:id)" << std::endl;
+  else if (doc.select_nodes(s.c_str()).size() == 0)
+    std::cout << "(none of them have gml:id)" << std::endl;
+  else
+    std::cout << "(some of them have gml:id, but not all)" << std::endl;
+
 
   s = "//" + localise("BuildingPart");
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of BuildingPart: " << tmp.size() << std::endl;
-
+  std::cout << std::setw(35) << std::left  << "<BuildingPart>";
+  int nobuildingparts = doc.select_nodes(s.c_str()).size();
+  std::cout << std::setw(15) << std::right << nobuildingparts << std::endl;
   s = "//" + localise("BuildingPart") + "[@" + localise("id") + "]";
-  tmp = doc.select_nodes(s.c_str());
-  std::cout << "# of BuildingPart with 'gml:id': " << tmp.size() << std::endl;
+  if (doc.select_nodes(s.c_str()).size() == nobuildingparts)
+    std::cout << "(all of them have gml:id)" << std::endl;
+  else if (doc.select_nodes(s.c_str()).size() == 0)
+    std::cout << "(none of them have gml:id)" << std::endl;
+  else
+    std::cout << "(some of them have gml:id, but not all)" << std::endl;
 
   s = "//" + localise("Building");
   pugi::xpath_node_set nbuildings = doc.select_nodes(s.c_str());
-  int counter = 0;
+  int c1 = 0;
+  std::string s1 = ".//" + localise("BuildingPart");
+  std::string s2 = ".//" + localise("Solid");
   for (auto& nb: nbuildings) {
-    std::string s1 = ".//" + localise("BuildingPart");
+    //-- BuildingPart
     pugi::xpath_node_set nbps = nb.node().select_nodes(s1.c_str());
     if (nbps.empty() == false) {
       for (auto& nbp : nbps) {
-        counter++;
+        c1++;
         break;
       }
     }
+    //-- primitives
+    // pugi::xpath_node_set tmp = nb.node().select_nodes(s2.c_str());
+    // if (tmp.empty() == false) {
+    //   for (auto& nbp : tmp) {
+    //     c2++;
+    //     break;
+    //   }
+    // }
   }
-  std::cout << "# of Building splitted into Part: " << counter << std::endl;
+  std::cout << std::setw(35) << std::left  << "<Building> having <BuildingPart>";
+  std::cout << std::setw(15) << std::right << c1 << std::endl;
+
 
   s = "//" + localise("Building") + "//" + localise("Solid");
-  tmp = doc.select_nodes(s.c_str());
-  if (tmp.size() == 0)
-    std::cout << "Buildings stored with MS" << std::endl;
+  if (doc.select_nodes(s.c_str()).size() == 0)
+    std::cout << "Buildings stored with <gml:MultiSurface>" << std::endl;
   else
     std::cout << "Buildings stored with <gml:Solid>" << std::endl;
 
-
+  std::cout << std::endl;
 }
 
 
 void parsefileandreport(std::string& ifile) {
-  std::cout << "Reading file: " << ifile << std::endl;
+  std::cout << "Reading file: " << ifile << std::endl << std::endl;
   pugi::xml_document doc;
   if (!doc.load_file(ifile.c_str())) 
   {
@@ -176,9 +198,20 @@ void parsefileandreport(std::string& ifile) {
     return;
   }
 
-  report_building(doc);
+  //-- A//B/*[1]
+  // std::string s = "//" + localise("Building") + "//" + localise("BuildingPart") + "[1]";
+  // std::string s = "(//" + localise("Building") + "//" + localise("BuildingPart") + ")[1]";
+  // std::string s = "//" + localise("Building") + "//" + localise("BuildingPart");
+  // std::cout << s << std::endl;
+  // pugi::xpath_node_set tmp = doc.select_nodes(s.c_str());
+  // std::cout << "# : " << tmp.size() << std::endl;
+
+  // std::string s = "count(//" + localise("Solid") + ")";
+  // pugi::xpath_node tmp = doc.select_node(s.c_str());
+  // std::cout << tmp.attribute() << std::endl;
 
   report_primitives(doc);
+  report_building(doc);
 
 }
 
@@ -186,3 +219,6 @@ void parsefileandreport(std::string& ifile) {
 std::string localise(std::string s) {
   return "*[local-name(.) = '" + s + "']";
 }
+// std::string localise(std::string s) {
+//   return ".[local-name() = '" + s + "']";
+// }
