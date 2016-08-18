@@ -18,6 +18,14 @@ if ( COMMAND cmake_policy )
   cmake_policy( SET CMP0003 NEW )  
 endif()
 
+# Boost
+find_package( Boost REQUIRED locale)
+if ( NOT Boost_FOUND )
+  message(SEND_ERROR "3dfier requires the Boost library")
+  return()  
+endif()
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+
 
 
 # Creating entries for target: val3dity
@@ -25,7 +33,9 @@ endif()
 
 add_executable( citygmlinfo pugixml.cpp main.cpp )
 
+include_directories( ${Boost_INCLUDE_DIRS} )
+
 
 # Link the executable to CGAL and third-party libraries
-target_link_libraries(citygmlinfo)
+target_link_libraries(citygmlinfo ${BOOST_LIBRARIES} ${Boost_LIBRARIES})
 
