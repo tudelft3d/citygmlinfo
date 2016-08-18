@@ -115,10 +115,10 @@ int main(int argc, char* const argv[])
 
 void print_info_aligned(std::string o, size_t number, bool tab) {
   if (tab == false)
-    std::cout << std::setw(35) << std::left  << o;
+    std::cout << std::setw(40) << std::left  << o;
   else
-    std::cout << "    " << std::setw(31) << std::left  << o;
-  std::cout << std::setw(15) << std::right << boost::locale::as::number << number << std::endl;
+    std::cout << "    " << std::setw(36) << std::left  << o;
+  std::cout << std::setw(10) << std::right << boost::locale::as::number << number << std::endl;
 }
 
 void report_primitives(pugi::xml_document& doc) {
@@ -153,44 +153,36 @@ void report_building(pugi::xml_document& doc) {
   int nobuildings = doc.select_nodes(s.c_str()).size();
   print_info_aligned("Building", nobuildings);
 
-
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "[1]";
   int nobwbp = doc.select_nodes(s.c_str()).size();
-  print_info_aligned("having BuildingPart", nobwbp, true);
   print_info_aligned("without BuildingPart", (nobuildings - nobwbp), true);
-
+  print_info_aligned("having BuildingPart", nobwbp, true);
+  s = "//" + localise("Building") + "[@" + localise("id") + "]";
+  print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
 
   s = "//" + localise("BuildingPart");
   int nobuildingparts = doc.select_nodes(s.c_str()).size();
   print_info_aligned("BuildingPart", nobuildingparts);
-
-  s = "//" + localise("Building") + "[@" + localise("id") + "]";
+  s = "//" + localise("BuildingPart") + "[@" + localise("id") + "]";
   print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
   
-  // s = "//" + localise("BuildingPart") + "[@" + localise("id") + "]";
-  // if (doc.select_nodes(s.c_str()).size() == nobuildingparts)
-  //   std::cout << "(all of them have gml:id)" << std::endl;
-  // else if (doc.select_nodes(s.c_str()).size() == 0)
-  //   std::cout << "(none of them have gml:id)" << std::endl;
-  // else
-  //   std::cout << "(some of them have gml:id, but not all)" << std::endl;
-
-
+  std::cout << "LOD1" << std::endl;
   s = "//" + localise("Building") + "/" + localise("lod1Solid") + "[1]";
-  print_info_aligned("Building with LOD1 gml:Solid", doc.select_nodes(s.c_str()).size());
+  print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod1Solid") + "[1]";
-  print_info_aligned("BuildingPart with LOD1 gml:Solid", doc.select_nodes(s.c_str()).size());
+  print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   
-  std::cout << "+++ LOD" << std::endl;
+  std::cout << "LOD2" << std::endl;
   s = "//" + localise("Building") + "/" + localise("lod2Solid") + "[1]";
-  print_info_aligned("Building with LOD2 gml:Solid", doc.select_nodes(s.c_str()).size());
+  print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod2Solid") + "[1]";
-  print_info_aligned("BuildingPart with LOD2 gml:Solid", doc.select_nodes(s.c_str()).size());
+  print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(),true);
 
+  std::cout << "LOD3" << std::endl;
   s = "//" + localise("Building") + "/" + localise("lod3Solid") + "[1]";
-  print_info_aligned("Building with LOD3 gml:Solid", doc.select_nodes(s.c_str()).size());
+  print_info_aligned("Building stored with gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod3Solid") + "[1]";
-  print_info_aligned("BuildingPart with LOD3 gml:Solid", doc.select_nodes(s.c_str()).size());
+  print_info_aligned("BuildingPart stored with gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   
 
 
