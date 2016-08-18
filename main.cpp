@@ -10,7 +10,7 @@
 std::string localise(std::string s);
 void        report_building(pugi::xml_document& doc);
 void        report_primitives(pugi::xml_document& doc);
-void        print_info_aligned(std::string o, size_t number);
+void        print_info_aligned(std::string o, size_t number, bool tab = false);
 
 
 
@@ -85,13 +85,14 @@ int main(int argc, char* const argv[])
     cmd.add(inputfile);
     cmd.parse( argc, argv );
 
-    std::cout << "Reading file: " << inputfile.getValue() << std::endl << std::endl;
+    std::cout << "Reading file: " << inputfile.getValue() << "... " << std::flush;
     pugi::xml_document doc;
     if (!doc.load_file(inputfile.getValue().c_str())) 
     {
       std::cerr << "File not found" << std::endl;
       return 0;
     }
+    std::cout << "done." << std::endl << std::endl;
 
     // std::string s = "//" + localise("Building") + "/" + localise("lod2Solid") + "[1]";
     // int total = doc.select_nodes(s.c_str()).size();
@@ -112,8 +113,11 @@ int main(int argc, char* const argv[])
   }
 }
 
-void print_info_aligned(std::string o, size_t number) {
-  std::cout << std::setw(35) << std::left  << o;
+void print_info_aligned(std::string o, size_t number, bool tab) {
+  if (tab == false)
+    std::cout << std::setw(35) << std::left  << o;
+  else
+    std::cout << "    " << std::setw(31) << std::left  << o;
   std::cout << std::setw(15) << std::right << boost::locale::as::number << number << std::endl;
 }
 
@@ -149,24 +153,20 @@ void report_building(pugi::xml_document& doc) {
   int nobuildings = doc.select_nodes(s.c_str()).size();
   print_info_aligned("Building", nobuildings);
 
-  s = "//" + localise("Building") + "[@" + localise("id") + "]";
-  if (doc.select_nodes(s.c_str()).size() == nobuildings)
-    std::cout << "(all of them have gml:id)" << std::endl;
-  else if (doc.select_nodes(s.c_str()).size() == 0)
-    std::cout << "(none of them have gml:id)" << std::endl;
-  else
-    std::cout << "(some of them have gml:id, but not all)" << std::endl;
 
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "[1]";
   int nobwbp = doc.select_nodes(s.c_str()).size();
-  print_info_aligned("Building having BuildingPart", nobwbp);
-  print_info_aligned("Building without BuildingPart", (nobuildings - nobwbp));
+  print_info_aligned("having BuildingPart", nobwbp, true);
+  print_info_aligned("without BuildingPart", (nobuildings - nobwbp), true);
 
 
   s = "//" + localise("BuildingPart");
   int nobuildingparts = doc.select_nodes(s.c_str()).size();
   print_info_aligned("BuildingPart", nobuildingparts);
 
+  s = "//" + localise("Building") + "[@" + localise("id") + "]";
+  print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
+  
   // s = "//" + localise("BuildingPart") + "[@" + localise("id") + "]";
   // if (doc.select_nodes(s.c_str()).size() == nobuildingparts)
   //   std::cout << "(all of them have gml:id)" << std::endl;
@@ -181,6 +181,7 @@ void report_building(pugi::xml_document& doc) {
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod1Solid") + "[1]";
   print_info_aligned("BuildingPart with LOD1 gml:Solid", doc.select_nodes(s.c_str()).size());
   
+  std::cout << "+++ LOD" << std::endl;
   s = "//" + localise("Building") + "/" + localise("lod2Solid") + "[1]";
   print_info_aligned("Building with LOD2 gml:Solid", doc.select_nodes(s.c_str()).size());
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod2Solid") + "[1]";
@@ -191,12 +192,6 @@ void report_building(pugi::xml_document& doc) {
   s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod3Solid") + "[1]";
   print_info_aligned("BuildingPart with LOD3 gml:Solid", doc.select_nodes(s.c_str()).size());
   
-
-  // s = "//" + localise("Building") + "//" + localise("Solid");
-  // if (doc.select_nodes(s.c_str()).size() == 0)
-  //   std::cout << "Buildings stored with <gml:MultiSurface>" << std::endl;
-  // else
-  //   std::cout << "Buildings stored with <gml:Solid>" << std::endl;
 
 
   // int c1 = 0;
