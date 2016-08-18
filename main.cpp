@@ -103,9 +103,21 @@ int main(int argc, char* const argv[])
     pugi::xml_node ncm = doc.first_child();
     get_namespaces(ncm, ns);
 
-    // std::string s = "//" + ns["building"] + "Building" + "/" + ns["gml"] + "lod2Solid";
-    // std::cout << s << std::endl;
-    // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
+    // // std::string s = "//" + ns["building"] + "Building" + "/" + ns["gml"] + "lod2Solid";
+    // // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
+    // // std::string s = "//" + ns["building"] + "Building[last()]";
+    // std::string s = "//" + ns["building"] + "Building";
+    // // pugi::xpath_node node = doc.select_node(s.c_str());
+    // pugi::xpath_nodes nodes = doc.select_nodes(s.c_str());
+    // // pugi::xpath_node_set nodes = doc.select_nodes(s.c_str())
+    // for (auto& n : nodes)
+    // {
+
+    // }
+    // for (pugi::xml_node tool = node.node().first_child(); tool; tool = tool.next_sibling())
+    // {
+    //   std::cout << tool.name() << std::endl;
+    // }
 
     report_primitives(doc, ns);
     report_building(doc, ns);
@@ -214,6 +226,44 @@ void report_building(pugi::xml_document& doc, std::map<std::string, std::string>
   std::cout << "LOD2" << std::endl;
   s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod2Solid" + "[1]";
   print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
+  
+  s = "//" + ns["building"] + "Building";
+  pugi::xpath_node_set nb = doc.select_nodes(s.c_str());
+  int total = 0;
+  for (auto& b : nb) {
+    std::string s1 = ".//" + ns["building"] + "lod2MultiSurface";
+    pugi::xpath_node_set tmp = b.node().select_nodes(s1.c_str());
+    if (tmp.empty() == false) {
+      for (auto& nbp : tmp) {
+        total++;
+        break;
+      }
+    }
+  }
+  print_info_aligned("Building stored in gml:MultiSurface", total, true);
+  // int total = 0;
+  // for (auto& b : nb) {
+  //   std::string s1 = ".//" + ns["building"] + "lod2MultiSurface";
+  //   pugi::xpath_node_set tmp = b.node().select_nodes(s1.c_str());
+  //   if (tmp.empty() == false) {
+  //     for (auto& nbp : tmp) {
+  //       total++;
+  //       break;
+  //     }
+  //   }
+  // }
+  // print_info_aligned("Building with LOD2 semantics", total, true);
+
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "boundedBy" + "[1]";
+  print_info_aligned("Building with semantics", doc.select_nodes(s.c_str()).size(), true);
+
+
+  // s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod2MultiSurface" + "[1]";
+  // print_info_aligned("Building stored in gml:MultiSurface", doc.select_nodes(s.c_str()).size(), true);
+
+  // s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "boundedBy" + "/" + ns["building"] + "RoofSurface" + "/" + ns["building"] + "lod2MultiSurface" + "[1]";
+  // print_info_aligned("Building stored in gml:MultiSurface", doc.select_nodes(s.c_str()).size(), true);
+  
   s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod2Solid" + "[1]";
   print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(),true);
 
