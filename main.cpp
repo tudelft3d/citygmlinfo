@@ -206,7 +206,7 @@ void report_building(pugi::xml_document& doc, std::map<std::string, std::string>
   print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
   
   std::cout << "LOD1" << std::endl;
-  std::cout << s << std::endl;
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod1Solid" + "[1]";
   print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod1Solid" + "[1]";
   print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
