@@ -1,5 +1,7 @@
 
 #include <tclap/CmdLine.h>
+#include <map>  
+#include <string>  
 #include <time.h>  
 #include <fstream>
 #include <string>
@@ -8,9 +10,10 @@
 
 
 std::string localise(std::string s);
-void        report_building(pugi::xml_document& doc);
-void        report_primitives(pugi::xml_document& doc);
+void        report_building(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
+void        report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        print_info_aligned(std::string o, size_t number, bool tab = false);
+void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns);
 
 
 
@@ -61,8 +64,10 @@ int main(int argc, char* const argv[])
   std::locale loc = gen("en_US.UTF-8");
   std::locale::global(loc);
   std::cout.imbue(loc);
-  
 
+  //-- XML namespaces map
+  std::map<std::string, std::string> ns;
+  
   //-- tclap options
   std::vector<std::string> primitivestovalidate;
   primitivestovalidate.push_back("S");  
@@ -94,16 +99,16 @@ int main(int argc, char* const argv[])
     }
     std::cout << "done." << std::endl << std::endl;
 
-    // std::string s = "//" + localise("Building") + "/" + localise("lod2Solid") + "[1]";
-    // int total = doc.select_nodes(s.c_str()).size();
-    // s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod2Solid") + "[1]";
-    // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
-    // total += doc.select_nodes(s.c_str()).size();
-    // std::cout << total << std::endl;
-    
+    //-- parse namespace
+    pugi::xml_node ncm = doc.first_child();
+    get_namespaces(ncm, ns);
 
-    report_primitives(doc);
-    report_building(doc);
+    // std::string s = "//" + ns["building"] + "Building" + "/" + ns["gml"] + "lod2Solid";
+    // std::cout << s << std::endl;
+    // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
+
+    report_primitives(doc, ns);
+    report_building(doc, ns);
     
     return 1;
   }
@@ -113,6 +118,40 @@ int main(int argc, char* const argv[])
   }
 }
 
+
+void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns) {
+  for (pugi::xml_attribute attr = root.first_attribute(); attr; attr = attr.next_attribute()) {
+    std::string name = attr.name();
+    if (name.find("xmlns") != std::string::npos) {
+      // std::cout << attr.name() << "=" << attr.value() << std::endl;
+      std::string value = attr.value();
+      std::string sns;
+      if (value.find("http://www.opengis.net/citygml/0") != std::string::npos)
+        sns = "citygml";
+      else if (value.find("http://www.opengis.net/citygml/1") != std::string::npos)
+        sns = "citygml";
+      else if (value.find("http://www.opengis.net/citygml/2") != std::string::npos)
+        sns = "citygml";
+      else if (value.find("http://www.opengis.net/gml") != std::string::npos)
+        sns = "gml";
+      else if (value.find("http://www.opengis.net/citygml/building") != std::string::npos)
+        sns = "building";
+      else if (value.find("http://www.w3.org/1999/xlink") != std::string::npos)
+        sns = "xlink";
+      else
+        sns = "";
+      if (sns != "") {
+        size_t pos = name.find(":");
+        if (pos == std::string::npos) 
+          ns[sns] = "";
+        else 
+          ns[sns] = name.substr(pos + 1) + ":";
+      }    
+    }
+  }
+}
+
+
 void print_info_aligned(std::string o, size_t number, bool tab) {
   if (tab == false)
     std::cout << std::setw(40) << std::left  << o;
@@ -121,67 +160,67 @@ void print_info_aligned(std::string o, size_t number, bool tab) {
   std::cout << std::setw(10) << std::right << boost::locale::as::number << number << std::endl;
 }
 
-void report_primitives(pugi::xml_document& doc) {
+void report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns) {
   std::cout << "+++++++++++++++++++ PRIMITIVES +++++++++++++++++++" << std::endl;
   
-  std::string s = "//" + localise("Solid");
+  std::string s = "//" + ns["gml"] + "Solid";
   print_info_aligned("gml:Solid", doc.select_nodes(s.c_str()).size());
 
-  s = "//" + localise("MultiSolid");
+  s = "//" + ns["gml"] + "MultiSolid";
   print_info_aligned("gml:MultiSolid", doc.select_nodes(s.c_str()).size());
 
-  s = "//" + localise("CompositeSolid");
+  s = "//" + ns["gml"] + "CompositeSolid";
   print_info_aligned("gml:CompositeSolid", doc.select_nodes(s.c_str()).size());
   
-  s = "//" + localise("MultiSurface");
+  s = "//" + ns["gml"] + "MultiSurface";
   print_info_aligned("gml:MultiSurface", doc.select_nodes(s.c_str()).size());
   
-  s = "//" + localise("CompositeSurface");
+  s = "//" + ns["gml"] + "CompositeSurface";
   print_info_aligned("gml:CompositeSurface", doc.select_nodes(s.c_str()).size());
 
-  s = "//" + localise("Polygon");
+  s = "//" + ns["gml"] + "Polygon";
   print_info_aligned("gml:Polygon", doc.select_nodes(s.c_str()).size());
 
   std::cout << std::endl;
 }
 
 
-void report_building(pugi::xml_document& doc) {
+void report_building(pugi::xml_document& doc, std::map<std::string, std::string>& ns) {
   std::cout << "++++++++++++++++++++ BUILDINGS +++++++++++++++++++" << std::endl;
   
-  std::string s = "//" + localise("Building");
+  std::string s = "//" + ns["building"] + "Building";
   int nobuildings = doc.select_nodes(s.c_str()).size();
   print_info_aligned("Building", nobuildings);
 
-  s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "[1]";
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "[1]";
   int nobwbp = doc.select_nodes(s.c_str()).size();
   print_info_aligned("without BuildingPart", (nobuildings - nobwbp), true);
   print_info_aligned("having BuildingPart", nobwbp, true);
-  s = "//" + localise("Building") + "[@" + localise("id") + "]";
+  s = "//" + ns["building"] + "Building" + "[@" + ns["gml"] + "id]";
   print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
 
-  s = "//" + localise("BuildingPart");
+  s = "//" + ns["building"] + "BuildingPart";
   int nobuildingparts = doc.select_nodes(s.c_str()).size();
   print_info_aligned("BuildingPart", nobuildingparts);
-  s = "//" + localise("BuildingPart") + "[@" + localise("id") + "]";
+  s = "//" + ns["building"] + "BuildingPart" + "[@" + ns["gml"] + "id]";
   print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
   
   std::cout << "LOD1" << std::endl;
-  s = "//" + localise("Building") + "/" + localise("lod1Solid") + "[1]";
+  std::cout << s << std::endl;
   print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod1Solid") + "[1]";
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod1Solid" + "[1]";
   print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   
   std::cout << "LOD2" << std::endl;
-  s = "//" + localise("Building") + "/" + localise("lod2Solid") + "[1]";
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod2Solid" + "[1]";
   print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod2Solid") + "[1]";
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod2Solid" + "[1]";
   print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(),true);
 
   std::cout << "LOD3" << std::endl;
-  s = "//" + localise("Building") + "/" + localise("lod3Solid") + "[1]";
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod3Solid" + "[1]";
   print_info_aligned("Building stored with gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  s = "//" + localise("Building") + "/" + localise("consistsOfBuildingPart") + "/" + localise("BuildingPart") + "/" + localise("lod3Solid") + "[1]";
+  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod3Solid" + "[1]";
   print_info_aligned("BuildingPart stored with gml:Solid", doc.select_nodes(s.c_str()).size(), true);
   
 
@@ -220,6 +259,4 @@ void report_building(pugi::xml_document& doc) {
 std::string localise(std::string s) {
   return "*[local-name(.) = '" + s + "']";
 }
-// std::string localise(std::string s) {
-//   return ".[local-name() = '" + s + "']";
-// }
+
