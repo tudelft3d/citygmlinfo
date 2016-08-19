@@ -1,4 +1,8 @@
 
+
+
+
+
 #include <tclap/CmdLine.h>
 #include <map>  
 #include <string>  
@@ -14,46 +18,8 @@ void        report_building(pugi::xml_document& doc, std::map<std::string, std::
 void        report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std::string>& ns, int lod, int& total_solid, int& total_ms, int& total_sem);
 void        report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        print_info_aligned(std::string o, size_t number, bool tab = false);
-void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns);
+void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns, std::string& vcitygml);
 
-
-
-class MyOutput : public TCLAP::StdOutput
-{
-public:
-  
-  virtual void usage(TCLAP::CmdLineInterface& c)
-  {
-    std::cout << "===== val3dity =====" << std::endl;
-    std::cout << "OPTIONS" << std::endl;
-    std::list<TCLAP::Arg*> args = c.getArgList();
-    for (TCLAP::ArgListIterator it = args.begin(); it != args.end(); it++) {
-      if ((*it)->getFlag() == "")
-        std::cout << "\t--" << (*it)->getName() << std::endl;
-      else
-        std::cout << "\t-" << (*it)->getFlag() << ", --" << (*it)->getName() << std::endl;
-      std::cout << "\t\t" << (*it)->getDescription() << std::endl;
-    }
-    std::cout << "EXAMPLES" << std::endl;
-    std::cout << "\tval3dity input.gml" << std::endl;
-    std::cout << "\t\tValidates each gml:Solid in input.gml and outputs a summary" << std::endl;
-    std::cout << "\tval3dity input.obj" << std::endl;
-    std::cout << "\t\tValidates each object in the OBJ file and outputs a summary" << std::endl;
-    std::cout << "\tval3dity input.gml -p MS" << std::endl;
-    std::cout << "\t\tValidates each gml:MultiSurface in input.gml and outputs a summary" << std::endl;
-    std::cout << "\tval3dity input.gml --oxml report.xml" << std::endl;
-    std::cout << "\t\tValidates each gml:Solid in input.gml and outputs a detailed report in XML" << std::endl;
-    std::cout << "\tval3dity data/poly/cube.poly --ishell data/poly/a.poly" << std::endl;
-    std::cout << "\t\tValidates the solid formed by the outer shell cube.poly with the inner shell a.poly" << std::endl;
-    std::cout << "\tval3dity input.gml --verbose" << std::endl;
-    std::cout << "\t\tAll details of the validation of the solids is printed out" << std::endl;
-    std::cout << "\tval3dity input.gml --snap_tolerance 0.1" << std::endl;
-    std::cout << "\t\tThe vertices in gml:Solid closer than 0.1unit are snapped together" << std::endl;
-    std::cout << "\tval3dity input.gml --planarity_d2p 0.1" << std::endl;
-    std::cout << "\t\tValidates each gml:Solid in input.gml" << std::endl;
-    std::cout << "\t\tand uses a tolerance of 0.1unit (distance point-to-fitted-plane)" << std::endl;
-  }
-};
 
 
 int main(int argc, char* const argv[])
@@ -76,25 +42,24 @@ int main(int argc, char* const argv[])
   primitivestovalidate.push_back("MS");   
   TCLAP::ValuesConstraint<std::string> primVals(primitivestovalidate);
 
-  TCLAP::CmdLine cmd("Allowed options", ' ', "1.1");
-  MyOutput my;
-  cmd.setOutput(&my);
+  TCLAP::CmdLine cmd("Allowed options", ' ', "0.2");
+  // MyOutput my;
+  // cmd.setOutput(&my);
   try {
-    TCLAP::UnlabeledValueArg<std::string>  inputfile("inputfile", "input file in either GML (several gml:Solids possible) or POLY (one exterior shell)", true, "", "string");
-    TCLAP::SwitchArg                       buildings("B", "Buildings", "info about the Buildings", false);
-    TCLAP::SwitchArg                       geomprimitives("P", "geomprimitives", "unit tests output", false);
+    TCLAP::UnlabeledValueArg<std::string>  inputfile("inputfile", "The CityGML file", true, "", "string");
+    // TCLAP::SwitchArg                       buildings("B", "Buildings", "info about the Buildings", false);
+    // TCLAP::SwitchArg                       geomprimitives("P", "geomprimitives", "unit tests output", false);
     TCLAP::SwitchArg                       verbose("", "verbose", "verbose output", false);
 
-    cmd.add(buildings);
-    cmd.add(geomprimitives);
+    // cmd.add(buildings);
+    // cmd.add(geomprimitives);
     cmd.add(verbose);
     cmd.add(inputfile);
     cmd.parse( argc, argv );
 
     std::cout << "Reading file: " << inputfile.getValue() << "... " << std::flush;
     pugi::xml_document doc;
-    if (!doc.load_file(inputfile.getValue().c_str())) 
-    {
+    if (!doc.load_file(inputfile.getValue().c_str())) {
       std::cerr << "File not found" << std::endl;
       return 0;
     }
@@ -102,41 +67,16 @@ int main(int argc, char* const argv[])
 
     //-- parse namespace
     pugi::xml_node ncm = doc.first_child();
-    get_namespaces(ncm, ns);
-//
-//     // std::string s = "//" + ns["building"] + "Building" + "//" + ns["gml"] + "Solid";
-//     // std::string s = "//" + ns["building"] + "Building" + "/" + ns["gml"] + "Solid";
-//     std::string s = "//bldg:Building//gml:Solid/ancestor::bldg:lod2Solid";
-// //    std::string s = "//bldg:Building//gml:Solid";
-//     // // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
-//     // // std::string s = "//" + ns["building"] + "Building[last()]";
-//     // std::string s = "//" + ns["building"] + "Building";
-//     // // pugi::xpath_node node = doc.select_node(s.c_str());
-//     pugi::xpath_node_set nodes = doc.select_nodes(s.c_str());
-//     std::cout << nodes.size() << std::endl;
+    std::string vcitygml;
+    get_namespaces(ncm, ns, vcitygml);
 
-//     // // pugi::xpath_node_set nodes = doc.select_nodes(s.c_str())
-//     for (auto& n : nodes) {
-//       std::cout << n.node().name() << std::endl;
-//       std::cout << n.parent().parent().name() << std::endl;
-// //      break;
-//     }
-//     return 1;
+    if (vcitygml.empty() == true) {
+      std::cerr << "File does not have the CityGML namespace. Abort." << std::endl;
+      return 0;
+    }
+    std::cout << "++++++++++++++++++++ GENERAL +++++++++++++++++++++" << std::endl;
+    std::cout << "CityGML version: " << vcitygml << std::endl << std::endl;
 
-    // pugi::xpath_node a = nodes[0];
-    // std::cout << a.node().name() << std::endl;
-    // s = "ancestor::bldg:Building";
-    // // s = "//*[ancestor::blgd:BuildingPart]";
-    // pugi::xpath_node_set ancestors = a.node().select_nodes(s.c_str());
-    // std::cout << ancestors.size() << std::endl;
-    // if (ancestors.size() > 0)
-    //   std::cout << ancestors[0].node().name() << std::endl;
-
-
-    // for (pugi::xml_node tool = node.node().first_child(); tool; tool = tool.next_sibling())
-    // {
-    //   std::cout << tool.name() << std::endl;
-    // }
 
     report_primitives(doc, ns);
     report_building(doc, ns);
@@ -150,19 +90,26 @@ int main(int argc, char* const argv[])
 }
 
 
-void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns) {
+void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns, std::string& vcitygml) {
+  vcitygml = "";
   for (pugi::xml_attribute attr = root.first_attribute(); attr; attr = attr.next_attribute()) {
     std::string name = attr.name();
     if (name.find("xmlns") != std::string::npos) {
       // std::cout << attr.name() << "=" << attr.value() << std::endl;
       std::string value = attr.value();
       std::string sns;
-      if (value.find("http://www.opengis.net/citygml/0") != std::string::npos)
+      if (value.find("http://www.opengis.net/citygml/0") != std::string::npos) {
         sns = "citygml";
-      else if (value.find("http://www.opengis.net/citygml/1") != std::string::npos)
+        vcitygml = "v0.4";
+      }
+      else if (value.find("http://www.opengis.net/citygml/1") != std::string::npos) {
         sns = "citygml";
-      else if (value.find("http://www.opengis.net/citygml/2") != std::string::npos)
+        vcitygml = "v1.0";
+      }
+      else if (value.find("http://www.opengis.net/citygml/2") != std::string::npos) {
         sns = "citygml";
+        vcitygml = "v2.0";
+      }
       else if (value.find("http://www.opengis.net/gml") != std::string::npos)
         sns = "gml";
       else if (value.find("http://www.opengis.net/citygml/building") != std::string::npos)
@@ -190,6 +137,7 @@ void print_info_aligned(std::string o, size_t number, bool tab) {
     std::cout << "    " << std::setw(36) << std::left  << o;
   std::cout << std::setw(10) << std::right << boost::locale::as::number << number << std::endl;
 }
+
 
 void report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns) {
   std::cout << "+++++++++++++++++++ PRIMITIVES +++++++++++++++++++" << std::endl;
