@@ -11,6 +11,7 @@
 
 std::string localise(std::string s);
 void        report_building(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
+void        report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std::string>& ns, int lod, int& total_solid, int& total_ms, int& total_sem);
 void        report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        print_info_aligned(std::string o, size_t number, bool tab = false);
 void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns);
@@ -102,18 +103,36 @@ int main(int argc, char* const argv[])
     //-- parse namespace
     pugi::xml_node ncm = doc.first_child();
     get_namespaces(ncm, ns);
+//
+//     // std::string s = "//" + ns["building"] + "Building" + "//" + ns["gml"] + "Solid";
+//     // std::string s = "//" + ns["building"] + "Building" + "/" + ns["gml"] + "Solid";
+//     std::string s = "//bldg:Building//gml:Solid/ancestor::bldg:lod2Solid";
+// //    std::string s = "//bldg:Building//gml:Solid";
+//     // // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
+//     // // std::string s = "//" + ns["building"] + "Building[last()]";
+//     // std::string s = "//" + ns["building"] + "Building";
+//     // // pugi::xpath_node node = doc.select_node(s.c_str());
+//     pugi::xpath_node_set nodes = doc.select_nodes(s.c_str());
+//     std::cout << nodes.size() << std::endl;
 
-    // // std::string s = "//" + ns["building"] + "Building" + "/" + ns["gml"] + "lod2Solid";
-    // // std::cout << doc.select_nodes(s.c_str()).size() << std::endl;
-    // // std::string s = "//" + ns["building"] + "Building[last()]";
-    // std::string s = "//" + ns["building"] + "Building";
-    // // pugi::xpath_node node = doc.select_node(s.c_str());
-    // pugi::xpath_nodes nodes = doc.select_nodes(s.c_str());
-    // // pugi::xpath_node_set nodes = doc.select_nodes(s.c_str())
-    // for (auto& n : nodes)
-    // {
+//     // // pugi::xpath_node_set nodes = doc.select_nodes(s.c_str())
+//     for (auto& n : nodes) {
+//       std::cout << n.node().name() << std::endl;
+//       std::cout << n.parent().parent().name() << std::endl;
+// //      break;
+//     }
+//     return 1;
 
-    // }
+    // pugi::xpath_node a = nodes[0];
+    // std::cout << a.node().name() << std::endl;
+    // s = "ancestor::bldg:Building";
+    // // s = "//*[ancestor::blgd:BuildingPart]";
+    // pugi::xpath_node_set ancestors = a.node().select_nodes(s.c_str());
+    // std::cout << ancestors.size() << std::endl;
+    // if (ancestors.size() > 0)
+    //   std::cout << ancestors[0].node().name() << std::endl;
+
+
     // for (pugi::xml_node tool = node.node().first_child(); tool; tool = tool.next_sibling())
     // {
     //   std::cout << tool.name() << std::endl;
@@ -197,6 +216,42 @@ void report_primitives(pugi::xml_document& doc, std::map<std::string, std::strin
 }
 
 
+void report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std::string>& ns, int lod, int& total_solid, int& total_ms, int& total_sem) {
+  total_solid = 0;
+  total_ms = 0;
+  total_sem = 0;
+  std::string slod = "lod" + std::to_string(lod);
+  std::string s = "//" + ns["building"] + "Building";
+  pugi::xpath_node_set nb = doc.select_nodes(s.c_str());
+  for (auto& b : nb) {
+    std::string s1 = ".//" + ns["building"] + slod + "Solid";
+    pugi::xpath_node_set tmp = b.node().select_nodes(s1.c_str());
+    if (tmp.empty() == false) {
+      for (auto& nbp : tmp) {
+        total_solid++;
+        break;
+      }
+    }
+    s1 = ".//" + ns["building"] + slod + "MultiSurface";
+    tmp = b.node().select_nodes(s1.c_str());
+    if (tmp.empty() == false) {
+      for (auto& nbp : tmp) {
+        total_ms++;
+        break;
+      }
+    }
+    s1 = ".//" + ns["building"] + "boundedBy" + "//" + ns["building"] + slod + "MultiSurface";
+    tmp = b.node().select_nodes(s1.c_str());
+    if (tmp.empty() == false) {
+      for (auto& nbp : tmp) {
+        total_sem++;
+        break;
+      }
+    }
+  }
+}
+
+
 void report_building(pugi::xml_document& doc, std::map<std::string, std::string>& ns) {
   std::cout << "++++++++++++++++++++ BUILDINGS +++++++++++++++++++" << std::endl;
   
@@ -217,88 +272,42 @@ void report_building(pugi::xml_document& doc, std::map<std::string, std::string>
   s = "//" + ns["building"] + "BuildingPart" + "[@" + ns["gml"] + "id]";
   print_info_aligned("with gml:id", doc.select_nodes(s.c_str()).size(), true);
   
-  std::cout << "LOD1" << std::endl;
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod1Solid" + "[1]";
-  print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod1Solid" + "[1]";
-  print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  
-  std::cout << "LOD2" << std::endl;
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod2Solid" + "[1]";
-  print_info_aligned("Building stored in gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  
+  std::cout << "LOD0" << std::endl;
+  int total_footprint = 0;
+  int total_roofedge = 0;
   s = "//" + ns["building"] + "Building";
   pugi::xpath_node_set nb = doc.select_nodes(s.c_str());
-  int total = 0;
   for (auto& b : nb) {
-    std::string s1 = ".//" + ns["building"] + "lod2MultiSurface";
+    std::string s1 = ".//" + ns["building"] + "lod0FootPrint";
     pugi::xpath_node_set tmp = b.node().select_nodes(s1.c_str());
     if (tmp.empty() == false) {
       for (auto& nbp : tmp) {
-        total++;
+        total_footprint++;
+        break;
+      }
+    }
+    s1 = ".//" + ns["building"] + "lod0RoofEdge";
+    tmp = b.node().select_nodes(s1.c_str());
+    if (tmp.empty() == false) {
+      for (auto& nbp : tmp) {
+        total_roofedge++;
         break;
       }
     }
   }
-  print_info_aligned("Building stored in gml:MultiSurface", total, true);
-  // int total = 0;
-  // for (auto& b : nb) {
-  //   std::string s1 = ".//" + ns["building"] + "lod2MultiSurface";
-  //   pugi::xpath_node_set tmp = b.node().select_nodes(s1.c_str());
-  //   if (tmp.empty() == false) {
-  //     for (auto& nbp : tmp) {
-  //       total++;
-  //       break;
-  //     }
-  //   }
-  // }
-  // print_info_aligned("Building with LOD2 semantics", total, true);
-
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "boundedBy" + "[1]";
-  print_info_aligned("Building with semantics", doc.select_nodes(s.c_str()).size(), true);
-
-
-  // s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod2MultiSurface" + "[1]";
-  // print_info_aligned("Building stored in gml:MultiSurface", doc.select_nodes(s.c_str()).size(), true);
-
-  // s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "boundedBy" + "/" + ns["building"] + "RoofSurface" + "/" + ns["building"] + "lod2MultiSurface" + "[1]";
-  // print_info_aligned("Building stored in gml:MultiSurface", doc.select_nodes(s.c_str()).size(), true);
+  print_info_aligned("Building with FootPrint", total_footprint, true);
+  print_info_aligned("Building with RoofEdge", total_roofedge, true);
   
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod2Solid" + "[1]";
-  print_info_aligned("BuildingPart stored in gml:Solid", doc.select_nodes(s.c_str()).size(),true);
-
-  std::cout << "LOD3" << std::endl;
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "lod3Solid" + "[1]";
-  print_info_aligned("Building stored with gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  s = "//" + ns["building"] + "Building" + "/" + ns["building"] + "consistsOfBuildingPart" + "/" + ns["building"] + "BuildingPart" + "/" + ns["building"] + "lod3Solid" + "[1]";
-  print_info_aligned("BuildingPart stored with gml:Solid", doc.select_nodes(s.c_str()).size(), true);
-  
-
-
-  // int c1 = 0;
-  // std::string s1 = ".//" + localise("BuildingPart");
-  // std::string s2 = ".//" + localise("Solid");
-  // for (auto& nb: nbuildings) {
-  //   //-- BuildingPart
-  //   pugi::xpath_node_set nbps = nb.node().select_nodes(s1.c_str());
-  //   if (nbps.empty() == false) {
-  //     for (auto& nbp : nbps) {
-  //       c1++;
-  //       break;
-  //     }
-  //   }
-  //   //-- primitives
-  //   // pugi::xpath_node_set tmp = nb.node().select_nodes(s2.c_str());
-  //   // if (tmp.empty() == false) {
-  //   //   for (auto& nbp : tmp) {
-  //   //     c2++;
-  //   //     break;
-  //   //   }
-  //   // }
-  // }
-  // std::cout << std::setw(35) << std::left  << "<Building> having <BuildingPart>";
-  // std::cout << std::setw(15) << std::right << c1 << std::endl;
-
+  for (int lod = 1; lod <= 4; lod++) {
+    std::cout << "LOD" << lod << std::endl;
+    int totals = 0;
+    int totalms = 0;
+    int totalsem = 0;
+    report_building_each_lod(doc, ns, lod, totals, totalms, totalsem);
+    print_info_aligned("Building stored in gml:Solid", totals, true);
+    print_info_aligned("Building stored in gml:MultiSurface", totalms, true);
+    print_info_aligned("Building with semantics for surfaces", totalsem, true);
+  }
 
 
   std::cout << std::endl;
