@@ -1,4 +1,3 @@
-
 #include <tclap/CmdLine.h>
 #include <map>  
 #include <string>  
@@ -17,6 +16,7 @@ void        report_relief(pugi::xml_document& doc, std::map<std::string, std::st
 void        report_landuse(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        print_info_aligned(std::string o, size_t number, bool tab = false);
 void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns, std::string& vcitygml);
+bool        contains_class(pugi::xml_node& root, std::string ns, std::string theclass);
 
 
 
@@ -45,12 +45,24 @@ int main(int argc, char* const argv[])
   // cmd.setOutput(&my);
   try {
     TCLAP::UnlabeledValueArg<std::string>  inputfile("inputfile", "The CityGML file", true, "", "string");
-    // TCLAP::SwitchArg                       buildings("B", "Buildings", "info about the Buildings", false);
-    // TCLAP::SwitchArg                       geomprimitives("P", "geomprimitives", "unit tests output", false);
+    TCLAP::SwitchArg                       all("A", "all", "info about all classes", false);
+    TCLAP::SwitchArg                       geomprimitive("G", "geomprimitives", "info about geometry primitives", false);
+    TCLAP::SwitchArg                       building("B", "Building", "info about the Buildings", false);
+    TCLAP::SwitchArg                       relief("R", "Relief", "info about the Relief", false);
+    TCLAP::SwitchArg                       water("W", "Water", "info about the Water", false);
+    TCLAP::SwitchArg                       vegetation("V", "Vegetation", "info about the Vegetation", false);
+    TCLAP::SwitchArg                       landuse("L", "Landuse", "info about the Landuse", false);
+    TCLAP::SwitchArg                       transportation("T", "Transportation", "info about the Transportation", false);
     TCLAP::SwitchArg                       verbose("", "verbose", "verbose output", false);
 
-    // cmd.add(buildings);
-    // cmd.add(geomprimitives);
+    cmd.add(all);
+    cmd.add(geomprimitive);
+    cmd.add(building);
+    cmd.add(relief);
+    cmd.add(water);
+    cmd.add(vegetation);
+    cmd.add(landuse);
+    cmd.add(transportation);
     cmd.add(verbose);
     cmd.add(inputfile);
     cmd.parse( argc, argv );
@@ -73,13 +85,63 @@ int main(int argc, char* const argv[])
       return 0;
     }
     std::cout << "++++++++++++++++++++ GENERAL +++++++++++++++++++++" << std::endl;
-    std::cout << "CityGML version: " << vcitygml << std::endl << std::endl;
+    std::cout << "CityGML version: " << vcitygml << std::endl;
 
+    std::cout << "CityGML classes present: " << std::endl;
+    std::string s;
+    pugi::xpath_node no;
+    // Appearance, Bridge, Building, CityFurniture, CityObjectGroup, Generics, LandUse, Relief, Transportation, Tunnel, Vegetation, WaterBody,
+ 
+    if (contains_class(doc, ns["building"], "Building") == true)
+      std::cout << "    " << "Building" << std::endl;
 
-    report_primitives(doc, ns);
-    report_building(doc, ns);
-    report_relief(doc, ns);
-    report_landuse(doc, ns);
+    if (contains_class(doc, ns["dem"], "ReliefFeature") == true)
+      std::cout << "    " << "Relief" << std::endl;
+
+    if ( (contains_class(doc, ns["veg"], "SolitaryVegetationObject") == true) ||
+         (contains_class(doc, ns["veg"], "PlantCover") == true) )
+      std::cout << "    " << "Vegetation" << std::endl;
+
+    if ( (contains_class(doc, ns["wtr"], "WaterBody") == true) ||
+         (contains_class(doc, ns["wtr"], "WaterClosureSurface") == true) || 
+         (contains_class(doc, ns["wtr"], "WaterGroundSurface") == true) || 
+         (contains_class(doc, ns["wtr"], "WaterSurface") == true) )
+      std::cout << "    " << "Water" << std::endl;
+
+    if (contains_class(doc, ns["luse"], "LandUse") == true)
+      std::cout << "    " << "LandUse" << std::endl;
+
+    if ( (contains_class(doc, ns["tran"], "TrafficArea") == true) ||
+         (contains_class(doc, ns["tran"], "TransportationComplex") == true) || 
+         (contains_class(doc, ns["tran"], "Track") == true) || 
+         (contains_class(doc, ns["tran"], "Railway") == true) || 
+         (contains_class(doc, ns["tran"], "Road") == true) || 
+         (contains_class(doc, ns["tran"], "Square") == true) || 
+         (contains_class(doc, ns["tran"], "AuxiliaryTrafficArea") == true) )
+      std::cout << "    " << "Water" << std::endl;
+
+    if (all.getValue() == true) {
+      report_primitives(doc, ns);
+      report_building(doc, ns);
+      report_relief(doc, ns);
+      report_landuse(doc, ns);
+    }
+    else {
+      if (geomprimitive.getValue() == true)
+        report_primitives(doc, ns);
+      if (building.getValue() == true)
+        report_building(doc, ns);
+      if (relief.getValue() == true)
+        report_relief(doc, ns);
+      // if (water.getValue() == true)
+        // report_primitives(doc, ns);
+      // if (vegetation.getValue() == true)
+        // report_primitives(doc, ns);
+      if (landuse.getValue() == true)
+        report_landuse(doc, ns);
+      // if (transportation.getValue() == true)
+        // report_primitives(doc, ns);
+    }
     
     return 1;
   }
@@ -89,6 +151,13 @@ int main(int argc, char* const argv[])
   }
 }
 
+bool contains_class(pugi::xml_node& root, std::string ns, std::string theclass) {
+  std::string s = "//" + ns + theclass + "[1]";
+  pugi::xpath_node no = root.select_node(s.c_str());
+  if (no != NULL)
+    return true;
+  return false;
+}
 
 void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns, std::string& vcitygml) {
   vcitygml = "";
@@ -118,8 +187,14 @@ void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns
         sns = "dem";
       else if (value.find("http://www.opengis.net/citygml/vegetation") != std::string::npos)
         sns = "veg";
+      else if (value.find("http://www.opengis.net/citygml/waterbody") != std::string::npos)
+        sns = "wtr";
       else if (value.find("http://www.opengis.net/citygml/landuse") != std::string::npos)
         sns = "luse";
+      else if (value.find("http://www.opengis.net/citygml/transportation") != std::string::npos)
+        sns = "tran";      
+      else if (value.find("http://www.opengis.net/citygml/cityfurniture") != std::string::npos)
+        sns = "frn";      
       else if (value.find("http://www.w3.org/1999/xlink") != std::string::npos)
         sns = "xlink";
       else
