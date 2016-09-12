@@ -1,8 +1,4 @@
 
-
-
-
-
 #include <tclap/CmdLine.h>
 #include <map>  
 #include <string>  
@@ -14,9 +10,11 @@
 
 
 std::string localise(std::string s);
+void        report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        report_building(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std::string>& ns, int lod, int& total_solid, int& total_ms, int& total_sem);
-void        report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
+void        report_relief(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
+void        report_landuse(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        print_info_aligned(std::string o, size_t number, bool tab = false);
 void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns, std::string& vcitygml);
 
@@ -80,6 +78,8 @@ int main(int argc, char* const argv[])
 
     report_primitives(doc, ns);
     report_building(doc, ns);
+    report_relief(doc, ns);
+    report_landuse(doc, ns);
     
     return 1;
   }
@@ -114,6 +114,12 @@ void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns
         sns = "gml";
       else if (value.find("http://www.opengis.net/citygml/building") != std::string::npos)
         sns = "building";
+      else if (value.find("http://www.opengis.net/citygml/relief") != std::string::npos)
+        sns = "dem";
+      else if (value.find("http://www.opengis.net/citygml/vegetation") != std::string::npos)
+        sns = "veg";
+      else if (value.find("http://www.opengis.net/citygml/landuse") != std::string::npos)
+        sns = "luse";
       else if (value.find("http://www.w3.org/1999/xlink") != std::string::npos)
         sns = "xlink";
       else
@@ -257,10 +263,78 @@ void report_building(pugi::xml_document& doc, std::map<std::string, std::string>
     print_info_aligned("Building with semantics for surfaces", totalsem, true);
   }
 
+  //-- Terrain Intersection Curve
+  std::cout << "Terrain Intersection Curve" << std::endl;
+  for (int lod = 1; lod <= 4; lod++) {
+    int tic = 0;
+    s = "//" + ns["building"] + "Building";
+    nb = doc.select_nodes(s.c_str());
+    std::string slod = "lod" + std::to_string(lod);
+    for (auto& b : nb) {
+      std::string s1 = ".//" + ns["building"] + slod + "TerrainIntersection";
+      pugi::xpath_node_set tmp = b.node().select_nodes(s1.c_str());
+      if (tmp.empty() == false) {
+        for (auto& nbp : tmp) {
+          tic++;
+          break;
+        }
+      }
+    }
+    std::string tmp = "Building with " + slod + " TIC";
+    print_info_aligned(tmp, tic, true);
+  }
 
   std::cout << std::endl;
 }
 
+
+void report_relief(pugi::xml_document& doc, std::map<std::string, std::string>& ns) {
+  std::cout << "+++++++++++++++++++++ RELIEF +++++++++++++++++++++" << std::endl;
+  std::string s;
+  int no;
+
+  s = "//" + ns["dem"] + "ReliefFeature";
+  int nof = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("ReliefFeature", nof);
+
+  s = "//" + ns["dem"] + "ReliefFeature" + "/" + ns["dem"] + "reliefComponent";
+  int noc = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("reliefComponent", noc);
+
+  s = "//" + ns["dem"] + "TINRelief";
+  no = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("TINRelief", no);
+
+  s = "//" + ns["dem"] + "RasterRelief";
+  no = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("RasterRelief", no);
+
+  s = "//" + ns["dem"] + "MassPointRelief";
+  no = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("MassPointRelief", no);
+
+  s = "//" + ns["dem"] + "BreaklineRelief";
+  no = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("BreaklineRelief", no);
+
+  s = "//" + ns["gml"] + "Triangle";
+  no = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("# gml:Triangle", no);
+
+ 
+  std::cout << std::endl;
+}
+
+
+void report_landuse(pugi::xml_document& doc, std::map<std::string, std::string>& ns) {
+  std::cout << "+++++++++++++++++++++ LANDUSE ++++++++++++++++++++" << std::endl;
+ 
+  std::string s = "//" + ns["luse"] + "LandUse";
+  int nof = doc.select_nodes(s.c_str()).size();
+  print_info_aligned("LandUse", nof);
+
+  std::cout << std::endl;
+}
 
 //-- ignore XML namespace
 std::string localise(std::string s) {
