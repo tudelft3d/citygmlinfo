@@ -8,7 +8,6 @@
 #include "boost/locale.hpp"
 
 
-std::string localise(std::string s);
 void        report_primitives(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        report_building(pugi::xml_document& doc, std::map<std::string, std::string>& ns);
 void        report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std::string>& ns, int lod, int& total_solid, int& total_ms, int& total_sem);
@@ -399,8 +398,4 @@ void report_landuse(pugi::xml_document& doc, std::map<std::string, std::string>&
   std::cout << std::endl;
 }
 
-//-- ignore XML namespace
-std::string localise(std::string s) {
-  return "*[local-name(.) = '" + s + "']";
-}
 
