@@ -19,12 +19,8 @@ void        get_namespaces(pugi::xml_node& root, std::map<std::string, std::stri
 bool        contains_class(pugi::xml_node& root, std::string ns, std::string theclass);
 
 
-
 int main(int argc, char* const argv[])
 {
-  std::streambuf* savedBufferCLOG;
-  std::ofstream mylog;
-
   boost::locale::generator gen;
   std::locale loc = gen("en_US.UTF-8");
   std::locale::global(loc);
@@ -33,16 +29,7 @@ int main(int argc, char* const argv[])
   //-- XML namespaces map
   std::map<std::string, std::string> ns;
   
-  //-- tclap options
-  std::vector<std::string> primitivestovalidate;
-  primitivestovalidate.push_back("S");  
-  primitivestovalidate.push_back("CS");   
-  primitivestovalidate.push_back("MS");   
-  TCLAP::ValuesConstraint<std::string> primVals(primitivestovalidate);
-
-  TCLAP::CmdLine cmd("Allowed options", ' ', "0.2");
-  // MyOutput my;
-  // cmd.setOutput(&my);
+  TCLAP::CmdLine cmd("Allowed options", ' ', "0.3");
   try {
     TCLAP::UnlabeledValueArg<std::string>  inputfile("inputfile", "The CityGML file", true, "", "string");
     TCLAP::SwitchArg                       all("A", "all", "info about all classes", false);
@@ -87,10 +74,10 @@ int main(int argc, char* const argv[])
     std::cout << "++++++++++++++++++++ GENERAL +++++++++++++++++++++" << std::endl;
     std::cout << "CityGML version: " << vcitygml << std::endl;
 
+    // Appearance, Bridge, Building, CityFurniture, CityObjectGroup, Generics, LandUse, Relief, Transportation, Tunnel, Vegetation, WaterBody,
     std::cout << "CityGML classes present: " << std::endl;
     std::string s;
     pugi::xpath_node no;
-    // Appearance, Bridge, Building, CityFurniture, CityObjectGroup, Generics, LandUse, Relief, Transportation, Tunnel, Vegetation, WaterBody,
  
     if (contains_class(doc, ns["building"], "Building") == true)
       std::cout << "    " << "Building" << std::endl;
@@ -119,6 +106,7 @@ int main(int argc, char* const argv[])
          (contains_class(doc, ns["tran"], "Square") == true) || 
          (contains_class(doc, ns["tran"], "AuxiliaryTrafficArea") == true) )
       std::cout << "    " << "Water" << std::endl;
+    std::cout << std::endl;
 
     if (all.getValue() == true) {
       report_primitives(doc, ns);
