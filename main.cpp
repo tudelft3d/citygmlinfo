@@ -97,6 +97,9 @@ int main(int argc, char* const argv[])
     if (contains_class(doc, ns["luse"], "LandUse") == true)
       std::cout << "    " << "LandUse" << std::endl;
 
+    if (contains_class(doc, ns["app"], "Appearance") == true)
+      std::cout << "    " << "Appearance" << std::endl;
+
     if ( (contains_class(doc, ns["tran"], "TrafficArea") == true) ||
          (contains_class(doc, ns["tran"], "TransportationComplex") == true) || 
          (contains_class(doc, ns["tran"], "Track") == true) || 
@@ -182,6 +185,8 @@ void get_namespaces(pugi::xml_node& root, std::map<std::string, std::string>& ns
         sns = "tran";      
       else if (value.find("http://www.opengis.net/citygml/cityfurniture") != std::string::npos)
         sns = "frn";      
+      else if (value.find("http://www.opengis.net/citygml/appearance") != std::string::npos)
+        sns = "app";      
       else if (value.find("http://www.w3.org/1999/xlink") != std::string::npos)
         sns = "xlink";
       else
