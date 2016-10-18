@@ -26,7 +26,7 @@ if ( NOT Boost_FOUND )
 endif()
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-
+INCLUDE_DIRECTORIES( BEFORE include )
 
 # Creating entries for target: val3dity
 # ############################
