@@ -253,7 +253,7 @@ void report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std
         break;
       }
     }
-    s1 = ".//" + ns["building"] + slod + "MultiSurface";
+    s1 = "./" + ns["building"] + slod + "MultiSurface";
     tmp = b.node().select_nodes(s1.c_str());
     if (tmp.empty() == false) {
       for (auto& nbp : tmp) {
@@ -261,7 +261,7 @@ void report_building_each_lod(pugi::xml_document& doc, std::map<std::string, std
         break;
       }
     }
-    s1 = ".//" + ns["building"] + "boundedBy" + "//" + ns["building"] + slod + "MultiSurface";
+    s1 = "./" + ns["building"] + "boundedBy" + "//" + ns["building"] + slod + "MultiSurface";
     tmp = b.node().select_nodes(s1.c_str());
     if (tmp.empty() == false) {
       for (auto& nbp : tmp) {
